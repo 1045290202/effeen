@@ -19,6 +19,6 @@ export const effeen: <T extends EffeenTarget>(target: T) => EffectEffeen<T> = <T
     return Effect.succeed(new Effeen(target));
 };
 
-export function run<T extends EffeenTarget>(effectEffeen: EffectEffeen<T, never, never>) {
+export function run<T extends EffeenTarget, E = never>(effectEffeen: Effect.Effect<Effeen<T> | void, E, never>) {
     return effectEffeen.pipe(Effect.runFork);
 }

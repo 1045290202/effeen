@@ -45,30 +45,21 @@ const effeen1 = pipe(
             aaaa: 200,
         },
         {
-            onUpdate: (self, progress) => {
-                // if (progress >= 0.5) {
-                //     Fiber.interruptFork(effeen1).pipe(Effect.runSync);
-                // }
-                return Effect.gen(function* () {
+            onUpdate: (self, progress) =>
+                Effect.gen(function* () {
                     const effeen = yield* self;
                     yield* Console.log(effeen, progress);
-                    yield* Effect.sleep(100);
-                });
-            },
+                    yield* Effect.fail("Error");
+                    // yield* Effect.sleep(100);
+                }),
         },
     ),
     Effect.provideService(Timer, setTimeOutService),
     // Effect.tap(Effect.log),
-    Effect.flatMap(() => {
-        return Effeen.effeen({
-            cccc: 100,
-            dddd: "100",
-        });
-    }),
     Effeen.to(
         100,
         {
-            cccc: 200,
+            aaaa: 200,
         },
         {
             onUpdate: (_, progress) => {
@@ -83,6 +74,7 @@ const effeen1 = pipe(
         console.log(effeen);
     }),
     Effect.provideService(Timer, testServices),
+    Effect.catchAll((e) => Effect.logError(e)),
     Effeen.run,
 );
 

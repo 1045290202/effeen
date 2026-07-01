@@ -11,14 +11,14 @@ import type { EffectEffeen, EffeenTarget, PartialOf } from "./type.ts";
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 export const to =
-    <T extends EffeenTarget>(
+    <T extends EffeenTarget, E = never>(
         duration: number,
         params: PartialOf<T, number>,
         options?: {
-            onUpdate?: (self: EffectEffeen<T>, progress: number) => Effect.Effect<void, never, Timer>;
+            onUpdate?: (self: EffectEffeen<T>, progress: number) => Effect.Effect<void, E, Timer>;
         },
     ) =>
-    (effectEffeen: EffectEffeen<T>): EffectEffeen<T> =>
+    <E2 = never, R2 = never>(effectEffeen: EffectEffeen<T, E2, R2>): EffectEffeen<T, E | E2, Timer | R2> =>
         Effect.gen(function* () {
             const effeen = yield* effectEffeen;
             const timer = yield* Timer;
@@ -43,7 +43,7 @@ export const to =
                     );
                 });
 
-                const update = options?.onUpdate?.(effectEffeen, progress);
+                const update = options?.onUpdate?.(Effect.succeed(effeen), progress);
                 if (update) {
                     yield* update;
                 }
