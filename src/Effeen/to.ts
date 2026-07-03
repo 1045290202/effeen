@@ -6,12 +6,12 @@
  */
 import { Effect } from "effect";
 import { Timer } from "./Timer.ts";
-import type { EffectEffeen, EffeenTarget, PartialOf } from "./type.ts";
+import type { EffectEffeen, EffeenObject, PartialOf } from "./type.ts";
 
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
 export const to =
-    <T extends EffeenTarget, E = never>(
+    <T extends EffeenObject, E = never>(
         duration: number,
         params: PartialOf<T, number>,
         options?: {

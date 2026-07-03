@@ -8,8 +8,8 @@ import type { Effect } from "effect";
 import type { Effeen } from "./effeen.ts";
 import type { Timer } from "./Timer.ts";
 
-export type EffeenTarget = object;
-export type EffectEffeen<T extends EffeenTarget, E = never, R = Timer> = Effect.Effect<Effeen<T>, E, R>;
+export type EffeenObject = object;
+export type EffectEffeen<T extends EffeenObject, E = never, R = Timer> = Effect.Effect<Effeen<T>, E, R>;
 
 type KeysOfType<T, V> = { [K in keyof T]: T[K] extends V ? K : never }[keyof T];
 export type PartialOf<T, V> = Partial<Pick<T, KeysOfType<T, V>>>;
