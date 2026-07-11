@@ -5,8 +5,8 @@
  * @Description
  */
 import { Effect } from "effect";
-import { Timer } from "./Timer.ts";
-import type { EffectEffeen, EffeenObject, PartialOf } from "./type.ts";
+import { Timer } from "../Timer.ts";
+import type { EffectEffeen, EffeenObject, PartialOf } from "../type.ts";
 
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 

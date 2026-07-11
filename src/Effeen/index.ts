@@ -5,8 +5,10 @@
  * @Description
  */
 
+export * from "./combinators";
+
 export * from "./Timer.ts";
 export * from "./effeen.ts";
-export * from "./to.ts";
+export * from "./tweens/to.ts";
 export * from "./type.ts";
 export * from "./registry.ts";

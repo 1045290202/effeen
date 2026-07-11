@@ -7,7 +7,6 @@
 import { Console, type Context, Effect, pipe } from "effect";
 import { Effeen } from "../src";
 import { Registry, RegistryLive, Timer } from "../src/Effeen";
-import type { EffeenObject, EffectEffeen } from "../src/Effeen";
 
 export const SetTimeOutTimerLive: Context.Tag.Service<typeof Timer> = Timer.of({
     nextTick: Effect.async<number>((resume) => {
@@ -35,56 +34,78 @@ export const TestTimerLive: Context.Tag.Service<typeof Timer> = Timer.of({
     nextTick: Effect.succeed(1),
 });
 
-/**
- * parallel组合器 - 柯里化设计
- * parallel(...fns) 返回一个接受 effectEffeen 的函数
- * 对每个fn应用该effectEffeen后并行执行，返回第一个结果
- */
-const parallel =
-    <T extends EffeenObject, E = never, R = never>(
-        ...fns: Array<(effectEffeen: EffectEffeen<T, E, R>) => EffectEffeen<T, E, R | Timer>>
-    ) =>
-    (effectEffeen: EffectEffeen<T, E, R>): EffectEffeen<T, E, R | Timer> =>
+const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
+    () =>
         Effect.gen(function* () {
-            const effeen = yield* effectEffeen;
-            yield* Effect.all(
-                fns.map((fn) => fn(Effect.succeed(effeen))),
-                { concurrency: "unbounded" },
-            );
-            return effeen;
-        });
+            const obj = { aaaa: 100, bbbb: "100", ccc: 500 };
 
-const obj = { aaaa: 100, bbbb: "100", ccc: 500 };
-
-/*const effeen1 = */ pipe(
-    Effeen.effeen(obj),
-    Effeen.to(
-        1000,
-        {
-            aaaa: 200,
-        },
-        {
-            onUpdate: (self, progress) =>
-                Effect.gen(function* () {
-                    const effeen = yield* self;
-                    yield* Console.log(effeen.target, progress);
-                    // yield* Effect.fail("Error");
-                    // yield* Effect.sleep(100);
+            const fiber = pipe(
+                Effeen.effeen(obj),
+                Effeen.to(
+                    100,
+                    {
+                        aaaa: 200,
+                    },
+                    {
+                        onUpdate: (self, progress) =>
+                            Effect.gen(function* () {
+                                const effeen = yield* self;
+                                yield* Console.log(effeen.target, progress);
+                                // yield* Effect.fail("Error");
+                                // yield* Effect.sleep(100);
+                            }),
+                    },
+                ),
+                Effect.provideService(Timer, SetTimeOutTimerLive),
+                Effect.tap(Console.log),
+                Effeen.to(100, {
+                    aaaa: 200,
                 }),
-        },
-    ),
-    Effect.provideService(Timer, SetTimeOutTimerLive),
-    // Effect.tap(Effect.log),
-    parallel(Effeen.to(100, { aaaa: 200 }), Effeen.to(100, { ccc: 200 })),
-    Effect.tap((effeen) => {
-        console.log(effeen);
-    }),
-    Effect.provideService(Timer, TestTimerLive),
-    Effect.provideService(Registry, RegistryLive),
-    Effeen.run,
-);
+                Effect.tap(Console.log),
+                Effect.provideService(Timer, TestTimerLive),
+                Effect.provideService(Registry, RegistryLive),
+                Effeen.run,
+            );
+            yield* fiber;
+        }),
+    () =>
+        Effect.gen(function* () {
+            const obj = { aaaa: 100, bbbb: "100", ccc: 500 };
 
-setTimeout(() => {
-    // Fiber.interruptFork(effeen1).pipe(Effect.runSync);
-    // Effeen.interruptByTarget(obj).pipe(Effect.runSync);
-}, 100);
+            const fiber = pipe(
+                Effeen.effeen(obj),
+                Effeen.to(
+                    1000,
+                    {
+                        aaaa: 200,
+                    },
+                    {
+                        onUpdate: (self, progress) =>
+                            Effect.gen(function* () {
+                                const effeen = yield* self;
+                                yield* Console.log(effeen.target, progress);
+                            }),
+                    },
+                ),
+                Effect.provideService(Timer, SetTimeOutTimerLive),
+                Effect.provideService(Registry, RegistryLive),
+                Effeen.run,
+            );
+
+            const interruptFiber = yield* Effect.sleep(100)
+                .pipe(Effect.tap(() => Console.log("Sleep done")))
+                .pipe(Effect.tap(() => Effeen.interruptByTarget(obj)))
+                .pipe(Effect.tap(() => Console.log("Interrupt done")))
+                .pipe(Effect.fork);
+
+            yield* Effect.all([fiber, interruptFiber], { concurrency: "unbounded" });
+        }),
+];
+
+Effect.forEach(playgrounds, (fn, index) =>
+    Effect.gen(function* () {
+        yield* Console.log("\n------------------------------------------------");
+        yield* Console.log(`Playing playground ${index + 1}`);
+        yield* fn().pipe(Effect.catchAllCause(() => Effect.void));
+    }),
+).pipe(Effect.runFork);
