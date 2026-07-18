@@ -30,28 +30,43 @@ export const RAFTimerLive: Context.Tag.Service<typeof Timer> = Timer.of({
     }),
 });
 
-export const TestTimerLive: Context.Tag.Service<typeof Timer> = Timer.of({
+/**
+ * 固定时间间隔的定时器（17毫秒）
+ * 用于测试时快速推进动画，不依赖真实时间流逝
+ */
+export const FixedTick17Timer: Context.Tag.Service<typeof Timer> = Timer.of({
+    nextTick: Effect.succeed(17),
+});
+
+/**
+ * 固定时间间隔的定时器（1毫秒）
+ * 用于测试时快速推进动画，不依赖真实时间流逝
+ */
+export const FixedTick1Timer: Context.Tag.Service<typeof Timer> = Timer.of({
     nextTick: Effect.succeed(1),
 });
 
-// ... existing code ...
+const currentTime = () => new Date().toISOString();
+
+/**
+ * 打印更新信息
+ * @param self
+ * @param progress
+ */
 const logOnUpdateInfo = <T extends EffeenObject>(
     self: EffectEffeen<T>,
     progress: number,
 ): Effect.Effect<void, never, Timer> =>
     Effect.gen(function* () {
         const effeen = yield* self;
-        yield* Console.log(new Date().toISOString(), effeen.target, progress);
+        yield* Console.log(currentTime(), "target:", effeen.target, "progress:", progress);
     });
-// ... existing code ...
 
 const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
     () =>
         Effect.gen(function* () {
-            const obj = { aaaa: 100, bbbb: "100", ccc: 500 };
-
-            const fiber = pipe(
-                Effeen.effeen(obj),
+            yield* pipe(
+                Effeen.effeen({ aaaa: 100 }),
                 Effeen.to(
                     100,
                     {
@@ -61,17 +76,10 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
                         onUpdate: logOnUpdateInfo,
                     },
                 ),
-                Effect.provideService(Timer, SetTimeOutTimerLive),
-                Effect.tap(Console.log),
-                Effeen.to(100, {
-                    aaaa: 200,
-                }),
-                Effect.tap(Console.log),
-                Effect.provideService(Timer, TestTimerLive),
+                Effect.provideService(Timer, FixedTick17Timer),
                 Effect.provideService(Registry, RegistryLive),
                 Effeen.run,
             );
-            yield* fiber;
         }),
     () =>
         Effect.gen(function* () {
@@ -94,9 +102,9 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
             );
 
             const interruptFiber = yield* Effect.sleep(100)
-                .pipe(Effect.tap(() => Console.log("Sleep done")))
+                .pipe(Effect.tap(() => Console.log(currentTime(), "Sleep done")))
                 .pipe(Effect.tap(() => Effeen.interruptByTarget(obj)))
-                .pipe(Effect.tap(() => Console.log("Interrupt done")))
+                .pipe(Effect.tap(() => Console.log(currentTime(), "Interrupt done")))
                 .pipe(Effect.fork);
 
             yield* Effect.all([fiber, interruptFiber], { concurrency: "unbounded" });
@@ -104,7 +112,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
     () =>
         Effect.gen(function* () {
             yield* Effect.gen(function* () {
-                const effeen = Effeen.effeen({ aaaa: 100, bbbb: "100", ccc: 500 });
+                const effeen = Effeen.effeen({ aaaa: 100, bbb: 1000, ccc: 500 });
                 yield* Effeen.to(
                     effeen,
                     100,
@@ -113,16 +121,18 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
                         onUpdate: logOnUpdateInfo,
                     },
                 );
+                yield* Console.log();
                 yield* Effeen.to(
                     effeen,
                     5,
-                    { ccc: 200 },
+                    { bbb: 300, ccc: 200 },
                     {
                         onUpdate: logOnUpdateInfo,
                     },
-                ).pipe(Effect.provideService(Timer, TestTimerLive));
+                ).pipe(Effect.provideService(Timer, FixedTick1Timer));
             })
-                .pipe(Effect.provideService(Timer, SetTimeOutTimerLive), Effect.provideService(Registry, RegistryLive))
+                .pipe(Effect.provideService(Timer, FixedTick17Timer))
+                .pipe(Effect.provideService(Registry, RegistryLive))
                 .pipe(Effeen.run);
         }),
 ];
