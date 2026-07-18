@@ -6,7 +6,7 @@
  */
 import { Console, type Context, Effect, pipe } from "effect";
 import { Effeen } from "../src";
-import { Registry, RegistryLive, Timer } from "../src/Effeen";
+import { type EffectEffeen, type EffeenObject, Registry, RegistryLive, Timer } from "../src/Effeen";
 
 export const SetTimeOutTimerLive: Context.Tag.Service<typeof Timer> = Timer.of({
     nextTick: Effect.async<number>((resume) => {
@@ -34,6 +34,17 @@ export const TestTimerLive: Context.Tag.Service<typeof Timer> = Timer.of({
     nextTick: Effect.succeed(1),
 });
 
+// ... existing code ...
+const logOnUpdateInfo = <T extends EffeenObject>(
+    self: EffectEffeen<T>,
+    progress: number,
+): Effect.Effect<void, never, Timer> =>
+    Effect.gen(function* () {
+        const effeen = yield* self;
+        yield* Console.log(new Date().toISOString(), effeen.target, progress);
+    });
+// ... existing code ...
+
 const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
     () =>
         Effect.gen(function* () {
@@ -47,13 +58,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
                         aaaa: 200,
                     },
                     {
-                        onUpdate: (self, progress) =>
-                            Effect.gen(function* () {
-                                const effeen = yield* self;
-                                yield* Console.log(effeen.target, progress);
-                                // yield* Effect.fail("Error");
-                                // yield* Effect.sleep(100);
-                            }),
+                        onUpdate: logOnUpdateInfo,
                     },
                 ),
                 Effect.provideService(Timer, SetTimeOutTimerLive),
@@ -80,11 +85,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
                         aaaa: 200,
                     },
                     {
-                        onUpdate: (self, progress) =>
-                            Effect.gen(function* () {
-                                const effeen = yield* self;
-                                yield* Console.log(effeen.target, progress);
-                            }),
+                        onUpdate: logOnUpdateInfo,
                     },
                 ),
                 Effect.provideService(Timer, SetTimeOutTimerLive),
@@ -99,6 +100,30 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
                 .pipe(Effect.fork);
 
             yield* Effect.all([fiber, interruptFiber], { concurrency: "unbounded" });
+        }),
+    () =>
+        Effect.gen(function* () {
+            yield* Effect.gen(function* () {
+                const effeen = Effeen.effeen({ aaaa: 100, bbbb: "100", ccc: 500 });
+                yield* Effeen.to(
+                    effeen,
+                    100,
+                    { aaaa: 200 },
+                    {
+                        onUpdate: logOnUpdateInfo,
+                    },
+                );
+                yield* Effeen.to(
+                    effeen,
+                    5,
+                    { ccc: 200 },
+                    {
+                        onUpdate: logOnUpdateInfo,
+                    },
+                ).pipe(Effect.provideService(Timer, TestTimerLive));
+            })
+                .pipe(Effect.provideService(Timer, SetTimeOutTimerLive), Effect.provideService(Registry, RegistryLive))
+                .pipe(Effeen.run);
         }),
 ];
 
