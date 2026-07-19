@@ -136,6 +136,34 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
                 .pipe(Effect.provideService(Registry, RegistryLive))
                 .pipe(Effeen.run);
         }),
+    () =>
+        Effect.gen(function* () {
+            yield* pipe(
+                Effeen.effeen({ aaaa: 100, bbbb: 1000 }),
+                Effeen.Tween.to(
+                    100,
+                    {
+                        aaaa: 200,
+                    },
+                    {
+                        onUpdate: logOnUpdateInfo,
+                    },
+                ),
+                Effeen.Tween.delay(1000),
+                Effeen.Tween.to(
+                    100,
+                    {
+                        bbbb: 200,
+                    },
+                    {
+                        onUpdate: logOnUpdateInfo,
+                    },
+                ),
+                Effect.provideService(Timer, FixedTick17Timer),
+                Effect.provideService(Registry, RegistryLive),
+                Effeen.run,
+            );
+        }),
 ];
 
 Effect.forEach(playgrounds, (fn, index) =>

@@ -11,4 +11,12 @@ import { Context, type Effect } from "effect";
  * 每次 yield nextTick 等待下一帧并返回当前绝对时间戳（ms，performance.now 语义）。
  * 消费端自行计算两次 nextTick 之间的 delta。
  */
-export class Timer extends Context.Tag("Timer")<Timer, { readonly nextTick: Effect.Effect<number> }>() {}
+export class Timer extends Context.Tag("Timer")<
+    Timer,
+    {
+        /**
+         * 等待下一帧并返回当前绝对时间戳
+         */
+        readonly nextTick: Effect.Effect<number>;
+    }
+>() {}
