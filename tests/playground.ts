@@ -73,6 +73,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
                         aaaa: 200,
                     },
                     {
+                        easing: Effeen.Easing.easeInQuad,
                         onUpdate: logOnUpdateInfo,
                     },
                 ),
@@ -83,7 +84,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
         }),
     () =>
         Effect.gen(function* () {
-            const obj = { aaaa: 100, bbbb: "100", ccc: 500 };
+            const obj = { aaaa: 100 };
 
             const fiber = pipe(
                 Effeen.effeen(obj),

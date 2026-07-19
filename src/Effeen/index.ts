@@ -12,3 +12,4 @@ export * from "./effeen.ts";
 export * from "./tweens/to.ts";
 export * from "./type.ts";
 export * from "./registry.ts";
+export * as Easing from "./easings";

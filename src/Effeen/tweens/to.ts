@@ -5,29 +5,31 @@
  * @Description
  */
 import { dual } from "effect/Function";
-import { Effect } from "effect";
+import { Array, Effect } from "effect";
 import { Timer } from "../Timer.ts";
-import type { EffectEffeen, EffeenObject, PartialOf } from "../type.ts";
+import type { EasingFunction, EffectEffeen, EffeenObject, PartialOf } from "../type.ts";
+import { linear } from "../easings";
 
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+
+export type ToOptions<T extends EffeenObject, E> = {
+    easing?: EasingFunction;
+    onUpdate?: (self: EffectEffeen<T>, progress: number) => Effect.Effect<void, E, Timer>;
+};
 
 export const to = dual<
     // DataLast 签名（柯里化）
     <T extends EffeenObject, E = never>(
         duration: number,
         params: PartialOf<T, number>,
-        options?: {
-            onUpdate?: (self: EffectEffeen<T>, progress: number) => Effect.Effect<void, E, Timer>;
-        },
+        options?: ToOptions<T, E>,
     ) => <E2 = never, R2 = never>(effectEffeen: EffectEffeen<T, E2, R2>) => EffectEffeen<T, E | E2, Timer | R2>,
     // DataFirst 签名（非柯里化）
     <T extends EffeenObject, E = never, E2 = never, R2 = never>(
         effectEffeen: EffectEffeen<T, E2, R2>,
         duration: number,
         params: PartialOf<T, number>,
-        options?: {
-            onUpdate?: (self: EffectEffeen<T>, progress: number) => Effect.Effect<void, E, Timer>;
-        },
+        options?: ToOptions<T, E>,
     ) => EffectEffeen<T, E | E2, Timer | R2>
 >(4, (effectEffeen, duration, params, options) => {
     return Effect.gen(function* () {
@@ -40,21 +42,24 @@ export const to = dual<
             number
         >;
 
+        const easing: EasingFunction = options?.easing ?? linear;
+
         let dtSum: number = 0;
         let progress: number;
         do {
             dtSum += yield* timer.nextTick;
             progress = Math.min(dtSum / duration, 1);
+            const easedProgress: number = easing(progress);
 
-            keys.forEach((k) => {
+            Array.forEach(keys, (k) => {
                 (effeen.target as Record<keyof typeof params, number>)[k] = lerp(
                     starts[k],
                     params[k] as number,
-                    progress,
+                    easedProgress,
                 );
             });
 
-            const update = options?.onUpdate?.(Effect.succeed(effeen), progress);
+            const update = options?.onUpdate?.(Effect.succeed(effeen), easedProgress);
             if (update) {
                 yield* update;
             }

@@ -13,3 +13,8 @@ export type EffectEffeen<T extends EffeenObject, E = never, R = Timer> = Effect.
 
 type KeysOfType<T, V> = { [K in keyof T]: T[K] extends V ? K : never }[keyof T];
 export type PartialOf<T, V> = Partial<Pick<T, KeysOfType<T, V>>>;
+
+/**
+ * 缓动函数
+ */
+export type EasingFunction = (t: number) => number;
