@@ -67,7 +67,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
         Effect.gen(function* () {
             yield* pipe(
                 Effeen.effeen({ aaaa: 100 }),
-                Effeen.to(
+                Effeen.Tween.to(
                     100,
                     {
                         aaaa: 200,
@@ -88,7 +88,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
 
             const fiber = pipe(
                 Effeen.effeen(obj),
-                Effeen.to(
+                Effeen.Tween.to(
                     1000,
                     {
                         aaaa: 200,
@@ -114,7 +114,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
         Effect.gen(function* () {
             yield* Effect.gen(function* () {
                 const effeen = Effeen.effeen({ aaaa: 100, bbb: 1000, ccc: 500 });
-                yield* Effeen.to(
+                yield* Effeen.Tween.to(
                     effeen,
                     100,
                     { aaaa: 200 },
@@ -123,7 +123,7 @@ const playgrounds: Array<() => Effect.Effect<void, never, never>> = [
                     },
                 );
                 yield* Console.log();
-                yield* Effeen.to(
+                yield* Effeen.Tween.to(
                     effeen,
                     5,
                     { bbb: 300, ccc: 200 },

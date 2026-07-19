@@ -9,7 +9,7 @@ export * from "./combinators";
 
 export * from "./Timer.ts";
 export * from "./effeen.ts";
-export * from "./tweens/to.ts";
+export * as Tween from "./tweens";
 export * from "./type.ts";
 export * from "./registry.ts";
 export * as Easing from "./easings";
